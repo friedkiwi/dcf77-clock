@@ -180,27 +180,40 @@ void setup() {
 
   Serial.println("[WIFI] Connecting to WiFi...");
 
-  WiFi.enableIpV6();
-  WiFi.setHostname("DCF77-Clock");
 
   display.setTextColor(TFT_WHITE, TFT_BLACK);
   display.setTextSize(2);
   display.setCursor(0, 0);
-  if (wifiManager.getWiFiIsSaved()) {
-    display.print("Connecting to saved\nWiFi network...");
-  } else {
-    display.print("Please set up wifi using the DCF77-Clock-Setup access point.");
-  }
+  display.print("Please set up wifi using the DCF77-Clock-Setup access point.");
+  
+
+  wifiManager.setHostname("DCF77-Clock");
 
   const bool ok = wifiManager.autoConnect("DCF77-Clock-Setup");
   if (!ok) {
     Serial.println("[WIFI] Failed to connect and hit timeout");
   } else {
     Serial.println("[WIFI] Connected to WiFi.");
+    Serial.print("[WIFI] SSID: ");
+    Serial.println(WiFi.SSID());
+    Serial.print("[WIFI] Hostname: ");
+    Serial.println(WiFi.getHostname());
     Serial.print("[WIFI] IP address: ");
     Serial.println(WiFi.localIP());
-    Serial.print("[WIFI] IPv6 address: ");
+
+    bool ipv6ok = WiFi.enableIpV6();
+    if (ipv6ok) {
+      Serial.println("[WIFI] IPv6 enabled.");
+      uint32_t start = millis();
+      while (WiFi.localIPv6().toString() == "::" && millis() - start < 5000) {
+        delay(100);
+      }
+      Serial.print("[WIFI] IPv6 address: ");
     Serial.println(WiFi.localIPv6());
+    } else {
+      Serial.println("[WIFI] IPv6 enable failed.");
+    }
+    
   }
 
   setupWebServer();
@@ -260,6 +273,8 @@ void loop() {
 
     syncedShown = (status == 3) ? 1 : 0;
     lastStatus = status;
+  } else if (status == 2) {
+    Serial.printf("[DCF77] %05d Status: %s\n", uptimeSeconds, statusToText(status));
   }
 
   if (uptimeSeconds > 32000) {
