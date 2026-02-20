@@ -273,7 +273,7 @@ void loop() {
 
     syncedShown = (status == 3) ? 1 : 0;
     lastStatus = status;
-  } else if (status == 2) {
+  } else {
     Serial.printf("[DCF77] %05d Status: %s\n", uptimeSeconds, statusToText(status));
   }
 
